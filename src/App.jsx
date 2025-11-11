@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Spline from '@splinetool/react-spline'
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { Sparkles, FlameKindling, BookOpenText, Heart, Compass, MoonStar, Loader2 } from 'lucide-react'
 
 function useBackend() {
@@ -55,14 +55,18 @@ function WeightSlider({ label, icon: Icon, value, onChange, color }) {
 
 function Hero({ onScroll }) {
   const { tx, ty } = useParallax(30)
+  const layerX = useTransform(tx, v => `calc(${v} * -0.4)`)
+  const layerY = useTransform(ty, v => `calc(${v} * -0.4)`)
+  const badgeX = useTransform(tx, v => `calc(${v} * 0.6)`)
+  const badgeY = useTransform(ty, v => `calc(${v} * 0.6)`)
   return (
-    <section className="relative h-[100vh] w-full overflow-hidden perspective-1000">
+    <section className="relative h-[100vh] w-full overflow-hidden [perspective:1000px]">
       <motion.div className="absolute inset-0 will-change-transform" style={{ x: tx, y: ty }}>
         <Spline scene="https://prod.spline.design/atN3lqky4IzF-KEP/scene.splinecode" style={{ width: '100%', height: '100%' }} />
       </motion.div>
 
       {/* Atmospheric overlays for depth */}
-      <motion.div className="absolute inset-0 pointer-events-none" style={{ x: useTransform(tx, v => `calc(${v} * -0.4)`), y: useTransform(ty, v => `calc(${v} * -0.4)`) }}>
+      <motion.div className="absolute inset-0 pointer-events-none" style={{ x: layerX, y: layerY }}>
         <div className="absolute -inset-10 bg-[radial-gradient(ellipse_at_center,rgba(255,0,128,0.18),transparent_60%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
       </motion.div>
@@ -78,7 +82,7 @@ function Hero({ onScroll }) {
             transition={{ duration: 0.8 }}
             className="max-w-3xl drop-shadow-[0_10px_30px_rgba(255,0,128,0.25)]"
           >
-            <motion.div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-white/90 backdrop-blur will-change-transform" style={{ x: useTransform(tx, v => `calc(${v} * 0.6)`), y: useTransform(ty, v => `calc(${v} * 0.6)`) }}>
+            <motion.div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-white/90 backdrop-blur will-change-transform" style={{ x: badgeX, y: badgeY }}>
               <Sparkles className="h-4 w-4 text-yellow-300" />
               <span className="text-xs tracking-wide">Interactive · Adventure · Romance · Nightlife</span>
             </motion.div>
@@ -98,6 +102,7 @@ function Hero({ onScroll }) {
                 Begin Your Tale
                 <FlameKindling className="h-5 w-5 group-hover:scale-110 transition" />
               </motion.button>
+            </div>
           </motion.div>
         </div>
       </div>
@@ -113,8 +118,20 @@ function Particles({ count = 18, parallax }) {
     y: Math.random() * 100,
     size: Math.random() * 6 + 4,
     delay: Math.random() * 4,
-    depth: Math.random() * 0.8 + 0.2,
+    layer: Math.floor(Math.random() * 3),
   })), [count])
+
+  // Define parallax transforms per layer (fixed number, valid hook usage)
+  const x1 = tx ? useTransform(tx, v => `calc(${v} * -0.25)`) : null
+  const y1 = ty ? useTransform(ty, v => `calc(${v} * -0.25)`) : null
+  const x2 = tx ? useTransform(tx, v => `calc(${v} * -0.5)`) : null
+  const y2 = ty ? useTransform(ty, v => `calc(${v} * -0.5)`) : null
+  const x3 = tx ? useTransform(tx, v => `calc(${v} * -0.85)`) : null
+  const y3 = ty ? useTransform(ty, v => `calc(${v} * -0.85)`) : null
+
+  const layerX = [x1, x2, x3]
+  const layerY = [y1, y2, y3]
+
   return (
     <div className="pointer-events-none absolute inset-0">
       {seeds.map(p => (
@@ -126,8 +143,8 @@ function Particles({ count = 18, parallax }) {
             top: `${p.y}%`,
             width: p.size,
             height: p.size,
-            x: tx ? useTransform(tx, v => `calc(${v} * ${-p.depth})`) : 0,
-            y: ty ? useTransform(ty, v => `calc(${v} * ${-p.depth})`) : 0,
+            x: layerX[p.layer] || 0,
+            y: layerY[p.layer] || 0,
           }}
           animate={{
             y: [0, -8, 0],
